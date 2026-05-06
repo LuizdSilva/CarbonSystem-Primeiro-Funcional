@@ -1,0 +1,29 @@
+{
+  "properties": [
+    {
+      "name": "mqtt.broker.url",
+      "type": "java.lang.String",
+      "description": "URL de conexão do broker MQTT (ex: tcp://localhost:1883)"
+    },
+    {
+      "name": "carbontree.co2.limit",
+      "type": "java.lang.Double",
+      "description": "Limite máximo de CO2 para disparar alertas[cite: 2]"
+    },
+    {
+      "name": "carbontree.pm.limit",
+      "type": "java.lang.Double",
+      "description": "Limite máximo de Material Particulado (PM) para alertas[cite: 2]"
+    },
+    {
+      "name": "mqtt.client.id",
+      "type": "java.lang.String",
+      "description": "ID do cliente para a conexão MQTT"
+    },
+    {
+      "name": "mqtt.topic",
+      "type": "java.lang.String",
+      "description": "Tópico para inscrição dos sensores[cite: 1]"
+    }
+  ]
+}

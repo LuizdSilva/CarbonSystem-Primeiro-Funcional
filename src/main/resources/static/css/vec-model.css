@@ -1,0 +1,129 @@
+/* ─── Container geral ─── */
+.vec-page { font-family: var(--font), sans-serif; color: var(--text); }
+/* ─── Card de fase da curva N ─── */
+.vec-fase-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-bottom: 14px;
+}
+
+/* ─── Grid de KPIs do VEC ─── */
+.vec-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.vec-kpi {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    position: relative;
+    overflow: hidden;
+}
+.vec-kpi::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--border-light);
+}
+.vec-kpi-ok::before    { background: var(--primary-light); }
+.vec-kpi-danger::before { background: var(--danger); }
+
+.vec-kpi-label {
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px;
+    color: var(--text-dim);
+}
+.vec-kpi-val {
+    font-family: var(--font-mono), monospace;
+    font-size: 22px; font-weight: 800;
+    color: var(--text); line-height: 1;
+    margin: 4px 0 2px;
+}
+.vec-kpi-ok     .vec-kpi-val { color: var(--primary-light); }
+.vec-kpi-danger .vec-kpi-val { color: var(--danger); }
+.vec-kpi-unit { font-family: var(--font-mono), monospace; font-size: 10px; color: var(--text-dim); }
+.vec-kpi-sub  { font-size: 10px; color: var(--text-dim); margin-top: 2px; line-height: 1.4; }
+
+/* ─── Bloco de entrada VEC ─── */
+.vec-block {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+.vec-block-header {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-card2);
+}
+.vec-block-header h3 { font-size: 13px; font-weight: 700; margin: 0 0 2px; }
+.vec-block-header p  { font-size: 11px; color: var(--text-dim); margin: 0; }
+.vec-block-body { padding: 20px; }
+.vec-g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.vec-g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+/* ─── Inputs reutilizando .em-input ─── */
+.vec-group { display: flex; flex-direction: column; gap: 5px; }
+.vec-group label {
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px;
+    color: var(--text-dim);
+    display: flex; align-items: center; gap: 4px;
+}
+
+/* ─── Gráficos ─── */
+.vec-charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+.vec-chart-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+.vec-chart-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-card2);
+}
+.vec-chart-header h3 { font-size: 13px; font-weight: 700; }
+.vec-chart-body { padding: 16px 20px 20px; }
+
+/* ─── Caixa de info metodológica ─── */
+.vec-info-box {
+    background: rgba(56,189,248,0.05);
+    border: 1px solid rgba(56,189,248,0.18);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    font-size: 12px; color: var(--text-muted);
+    line-height: 1.7;
+    margin-bottom: 20px;
+}
+.vec-info-box strong { color: var(--text); }
+.vec-info-box code {
+    font-family: var(--font-mono), monospace; font-size: 11px;
+    background: var(--bg-card2); padding: 1px 5px;
+    border-radius: 4px; color: var(--primary-light);
+}
+
+/* ─── Responsivo ─── */
+@media (max-width: 900px) {
+    .vec-g2, .vec-g3 { grid-template-columns: 1fr; }
+    .vec-charts-grid { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,4 @@
+spring.datasource.url=jdbc:mysql://localhost:3306/carbontree_db?createDatabaseIfNotExist=true
+spring.datasource.username=seu_usuario
+spring.datasource.password=SUA_SENHA_AQUI
+spring.jpa.hibernate.ddl-auto=update

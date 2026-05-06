@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::content}, ~{::scripts-extra})}">
+<head><title>Gerenciar Estações</title></head>
+<body>
+<th:block th:fragment="content">
+
+    <div class="page-header">
+        <div class="header-text">
+            <h2>Estações de Monitoramento</h2>
+            <p>Gerencie os hardwares instalados para coleta de CO₂ e partículas.</p>
+        </div>
+        <div class="header-actions">
+            <a th:href="@{/stations/new}" class="btn-primary">+ Nova Estação</a>
+        </div>
+    </div>
+
+    <div class="table-card">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Cód.</th>
+                <th>Nome da Estação</th>
+                <th>Localização</th>
+                <th>Status</th>
+                <th>Ações</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="s : ${stations}">
+                <td class="font-mono" th:text="${s.stationCode}">ST-001</td>
+                <td><strong th:text="${s.name}">Estação Norte</strong></td>
+                <td th:text="${s.location}">Local</td>
+                <td>
+                    <span class="status-badge"
+                          th:classappend="${s.status.name() == 'ONLINE'}   ? 'badge-online' :
+                                         (${s.status.name() == 'OFFLINE'}  ? 'badge-offline' : 'badge-maintenance')"
+                          th:text="${s.status}">ONLINE</span>
+                </td>
+                <td class="table-actions">
+                    <a th:href="@{/stations/{id}(id=${s.id})}"      class="btn-icon" title="Ver Detalhes">📊</a>
+                    <a th:href="@{/stations/edit/{id}(id=${s.id})}" class="btn-icon" title="Editar">✏️</a>
+                    <form th:action="@{/stations/delete/{id}(id=${s.id})}" method="post" style="display:inline"
+                          onsubmit="return confirm('Excluir esta estação?')">
+                        <button type="submit" class="btn-icon text-danger">🗑️</button>
+                    </form>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(stations)}">
+                <td colspan="5" style="text-align:center;padding:40px;color:var(--text-dim)">
+                    Nenhuma estação cadastrada. Clique em "Nova Estação" para começar.
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+</th:block>
+<th:block th:fragment="scripts-extra"></th:block>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:fragment="layout(content, scriptsExtra)"
+      lang="pt-br">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${pageTitle != null} ? (${pageTitle} + ' | CarbonTree') : 'CarbonTree'">CarbonTree</title>
+    <link rel="stylesheet" type="text/css" th:href="@{/css/main.css}"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin="anonymous"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap"
+          rel="stylesheet"/>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3/dist/chartjs-plugin-annotation.min.js"></script>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar" role="navigation" aria-label="Menu principal">
+    <div class="sidebar-brand">
+        <div class="brand-icon" aria-hidden="true">🌳</div>
+        <div class="brand-text">
+            <span class="brand-name">CarbonTree</span>
+            <span class="brand-sub">Sistema Ambiental</span>
+        </div>
+    </div>
+
+    <ul class="sidebar-nav">
+
+        <li class="nav-section-title">Principal</li>
+        <li th:class="${#strings.contains(currentUri, '/dashboard')} ? 'active' : ''">
+            <a th:href="@{/dashboard}">
+                <span class="nav-icon" aria-hidden="true">📊</span>
+                <span>Dashboard KPIs</span>
+            </a>
+        </li>
+
+        <li class="nav-section-title">Monitoramento</li>
+        <li th:class="${#strings.contains(currentUri, '/stations')} ? 'active' : ''">
+            <a th:href="@{/stations}">
+                <span class="nav-icon" aria-hidden="true">📡</span>
+                <span>Estações</span>
+            </a>
+        </li>
+        <li th:class="${#strings.contains(currentUri, '/alerts')} ? 'active' : ''">
+            <a th:href="@{/alerts}">
+                <span class="nav-icon" aria-hidden="true">🔔</span>
+                <span>Alertas Críticos</span>
+                <span class="badge-alert" id="alert-badge" aria-label="alertas pendentes">!</span>
+            </a>
+        </li>
+
+        <li class="nav-section-title">Emissões &amp; Auditoria</li>
+
+        <li th:class="${#strings.contains(currentUri, '/emissions')} ? 'active' : ''">
+            <a th:href="@{/emissions}">
+                <span class="nav-icon" aria-hidden="true">🏭</span>
+                <span>Calculadora IPCC/LMDI</span>
+            </a>
+        </li>
+
+        <li th:class="${#strings.contains(currentUri, '/reports')} ? 'active' : ''">
+            <a th:href="@{/reports}">
+                <span class="nav-icon" aria-hidden="true">📋</span>
+                <span>Relatórios</span>
+            </a>
+        </li>
+
+        <li class="nav-section-title" sec:authorize="hasRole('ADMIN')">Admin</li>
+        <li sec:authorize="hasRole('ADMIN')">
+            <a th:href="@{/h2-console}" target="_blank" rel="noopener noreferrer">
+                <span class="nav-icon" aria-hidden="true">🗄️</span>
+                <span>Banco de Dados</span>
+            </a>
+        </li>
+
+    </ul>
+
+    <div class="sidebar-user">
+        <div class="user-avatar" aria-hidden="true">
+            <span sec:authentication="name">U</span>
+        </div>
+        <div class="user-info">
+            <span class="user-name" sec:authentication="name">Usuário</span>
+            <span class="user-role">Gestor Ambiental</span>
+        </div>
+        <a th:href="@{/logout}" class="logout-btn" title="Sair" rel="nofollow"
+           aria-label="Sair do sistema">⏻</a>
+    </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main class="main-content" id="main-content" role="main">
+    <header class="topbar">
+        <button class="sidebar-toggle" onclick="toggleSidebar()"
+                title="Abrir/fechar menu" aria-label="Abrir/fechar menu" type="button">☰</button>
+        <div class="topbar-title">
+            <h1 th:text="${pageTitle != null} ? ${pageTitle} : 'CarbonTree'">Página</h1>
+        </div>
+        <div class="topbar-right">
+            <div class="mqtt-status" id="mqtt-status" role="status" aria-live="polite">
+                <span class="status-dot online" aria-hidden="true"></span>
+                <span class="status-text">Sistema Online</span>
+            </div>
+            <div class="clock" id="clock" aria-label="Horário atual">--:--:--</div>
+        </div>
+    </header>
+
+    <div class="page-content">
+        <th:block th:replace="${content}"/>
+    </div>
+</main>
+
+<script>
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+    }
+    (function tick() {
+        const el = document.getElementById('clock');
+        if (el) el.textContent = new Date().toLocaleTimeString('pt-BR');
+        setTimeout(tick, 1000);
+    })();
+</script>
+
+<th:block th:replace="${scriptsExtra}"/>
+</body>
+</html>

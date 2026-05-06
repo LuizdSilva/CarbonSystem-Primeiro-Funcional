@@ -1,0 +1,16 @@
+{
+    "configurations": [
+        
+
+        {
+            "type": "java",
+            "name": "Spring Boot-CarbonTreeApplication<CarbonTreeSystem>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.carbontreesystem.CarbonTreeApplication",
+            "projectName": "CarbonTreeSystem",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

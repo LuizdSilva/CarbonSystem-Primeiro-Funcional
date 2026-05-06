@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::content}, ~{::scripts-extra})}">
+<head><title>Estação</title></head>
+<body>
+<th:block th:fragment="content">
+
+    <div class="form-card">
+        <form th:action="@{/stations/save}" th:object="${station}" method="post" class="ct-form">
+            <input type="hidden" th:field="*{id}" th:if="${station.id != null}"/>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="stationCode">Código da Estação *</label>
+                    <input type="text" id="stationCode" th:field="*{stationCode}"
+                           placeholder="Ex: ST-005" required/>
+                </div>
+                <div class="form-group">
+                    <label for="name">Nome *</label>
+                    <input type="text" id="name" th:field="*{name}"
+                           placeholder="Ex: Estação Norte" required/>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="location">Localização</label>
+                <input type="text" id="location" th:field="*{location}"
+                       placeholder="Ex: Setor Norte - Unidade A"/>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="latitude">Latitude</label>
+                    <input type="number" id="latitude" th:field="*{latitude}"
+                           step="0.000001" placeholder="-23.550520"/>
+                </div>
+                <div class="form-group">
+                    <label for="longitude">Longitude</label>
+                    <input type="number" id="longitude" th:field="*{longitude}"
+                           step="0.000001" placeholder="-46.633308"/>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="status">Status</label>
+                <select id="status" th:field="*{status}">
+                    <option value="ONLINE">Online</option>
+                    <option value="OFFLINE">Offline</option>
+                    <option value="MAINTENANCE">Manutenção</option>
+                </select>
+            </div>
+
+            <div class="form-actions">
+                <a th:href="@{/stations}" class="btn-outline">Cancelar</a>
+                <button type="submit" class="btn-primary">💾 Salvar Estação</button>
+            </div>
+        </form>
+    </div>
+
+</th:block>
+<th:block th:fragment="scripts-extra"></th:block>
+</body>
+</html>

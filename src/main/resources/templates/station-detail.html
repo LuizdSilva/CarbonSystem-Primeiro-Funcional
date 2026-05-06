@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::content}, ~{::scripts-extra})}">
+<head><title>Detalhe Estação</title></head>
+<body>
+<th:block th:fragment="content">
+
+    <div class="station-detail-header">
+        <div class="station-detail-info">
+            <span class="station-code" th:text="${station.stationCode}">ST-001</span>
+            <h2 th:text="${station.name}">Estação Norte</h2>
+            <p>📍 <span th:text="${station.location}">Local</span></p>
+        </div>
+        <div class="station-detail-status">
+            <span class="status-badge status-lg"
+                  th:classappend="${station.status.name() == 'ONLINE'} ? 'badge-online' :
+                                  (${station.status.name() == 'OFFLINE'} ? 'badge-offline' : 'badge-maintenance')"
+                  th:text="${station.status}">ONLINE</span>
+        </div>
+    </div>
+
+    <div class="mini-kpi-row" th:if="${not #lists.isEmpty(readings)}">
+        <div class="mini-kpi">
+            <span class="mini-kpi-label">Última leitura CO₂</span>
+            <span class="mini-kpi-val"
+                  th:text="${#numbers.formatDecimal(readings[0].co2Level, 1, 1)} + ' ppm'"
+                  th:classappend="${readings[0].co2Level > 1000} ? 'text-danger' : 'text-ok'">-</span>
+        </div>
+        <div class="mini-kpi">
+            <span class="mini-kpi-label">Última leitura PM</span>
+            <span class="mini-kpi-val"
+                  th:text="${#numbers.formatDecimal(readings[0].pmLevel, 1, 1)} + ' μg/m³'"
+                  th:classappend="${readings[0].pmLevel > 150} ? 'text-danger' : 'text-ok'">-</span>
+        </div>
+        <div class="mini-kpi">
+            <span class="mini-kpi-label">Temperatura</span>
+            <!-- L110: readings[0].temperature pode ser null → adicionado operador ternário seguro -->
+            <span class="mini-kpi-val"
+                  th:text="${readings[0].temperature != null}
+                            ? ${#numbers.formatDecimal(readings[0].temperature, 1, 1)} + ' °C'
+                            : '-'">-</span>
+        </div>
+        <div class="mini-kpi">
+            <span class="mini-kpi-label">Umidade</span>
+            <!-- L114: readings[0].humidity pode ser null → adicionado operador ternário seguro -->
+            <span class="mini-kpi-val"
+                  th:text="${readings[0].humidity != null}
+                            ? ${#numbers.formatDecimal(readings[0].humidity, 1, 1)} + ' %'
+                            : '-'">-</span>
+        </div>
+        <div class="mini-kpi">
+            <span class="mini-kpi-label">Total leituras (24h)</span>
+            <span class="mini-kpi-val" th:text="${#lists.size(readings)}">0</span>
+        </div>
+    </div>
+
+    <div class="chart-card" style="margin-bottom:20px;">
+        <div class="chart-header">
+            <h3>CO₂ e PM — Últimas 24 horas</h3>
+            <span class="chart-badge" th:text="${station.stationCode}">ST-001</span>
+        </div>
+        <div class="chart-body">
+            <canvas id="stationDetailChart" height="100"></canvas>
+        </div>
+    </div>
+
+    <div class="table-card full-width">
+        <div class="table-card-header">
+            <h3>Histórico de Leituras (últimas 24h)</h3>
+            <span style="font-size:0.78rem;color:var(--text-muted)"
+                  th:text="${#lists.size(readings)} + ' registros'">0 registros</span>
+        </div>
+        <div style="overflow-x:auto">
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>Data/Hora</th>
+                    <th>CO₂ (ppm)</th>
+                    <th>PM (μg/m³)</th>
+                    <th>Temp (°C)</th>
+                    <th>Umidade (%)</th>
+                    <th>Fonte</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="r : ${readings}">
+                    <td th:text="${#temporals.format(r.recordedAt, 'dd/MM/yyyy HH:mm:ss')}">-</td>
+                    <!-- L121: co2Level pode ser null → proteção adicionada -->
+                    <td th:text="${r.co2Level != null} ? ${#numbers.formatDecimal(r.co2Level, 1, 1)} : '-'"
+                        th:classappend="${r.co2Level != null and r.co2Level > 1000} ? 'text-danger' : ''">-</td>
+                    <!-- L130: pmLevel pode ser null → proteção adicionada -->
+                    <td th:text="${r.pmLevel != null} ? ${#numbers.formatDecimal(r.pmLevel, 1, 1)} : '-'"
+                        th:classappend="${r.pmLevel != null and r.pmLevel > 150} ? 'text-danger' : ''">-</td>
+                    <td th:text="${r.temperature != null} ? ${#numbers.formatDecimal(r.temperature, 1, 1)} : '-'">-</td>
+                    <td th:text="${r.humidity != null} ? ${#numbers.formatDecimal(r.humidity, 1, 1)} : '-'">-</td>
+                    <td><span class="source-badge" th:text="${r.source}">MQTT</span></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div style="margin-top:16px">
+        <a th:href="@{/stations}" class="btn-outline">← Voltar para Estações</a>
+    </div>
+
+</th:block>
+
+<th:block th:fragment="scripts-extra">
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const readingsData = /*[[${readings}]]*/ [];
+        /*]]>*/
+    </script>
+    <script>
+        class Chart {
+            constructor(context, param2) {
+
+            }
+
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('stationDetailChart');
+            if (!canvas || !readingsData.length) return;
+
+            const reversed = [...readingsData].reverse();
+            const labels = reversed.map(r => {
+                const d = new Date(r.r);
+                return d.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
+            });
+
+            new Chart(canvas.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'CO₂ (ppm)',
+                            data: reversed.map(r => r.co2Level),
+                            borderColor: '#22c55e',
+                            backgroundColor: 'rgba(34,197,94,0.08)',
+                            tension: 0.4, fill: true,
+                            pointRadius: 2, borderWidth: 2,
+                            yAxisID: 'yCo2'
+                        },
+                        {
+                            label: 'PM (μg/m³)',
+                            data: reversed.map(r => r.pmLevel),
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245,158,11,0.06)',
+                            tension: 0.4, fill: true,
+                            pointRadius: 2, borderWidth: 2,
+                            yAxisID: 'yPm'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    interaction: {mode: 'index', intersect: false},
+                    plugins: {
+                        legend: {display: true},
+                        tooltip: {backgroundColor: '#111814', borderColor: '#1e3027', borderWidth: 1}
+                    },
+                    scales: {
+                        x: {grid: {color: 'rgba(30,48,39,0.8)'}, ticks: {maxTicksLimit: 12}},
+                        yCo2: {
+                            type: 'linear', position: 'left',
+                            grid: {color: 'rgba(30,48,39,0.8)'},
+                            title: {display: true, text: 'CO₂ (ppm)', color: '#22c55e'}
+                        },
+                        yPm: {
+                            type: 'linear', position: 'right',
+                            grid: {drawOnChartArea: false},
+                            title: {display: true, text: 'PM (μg/m³)', color: '#f59e0b'}
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</th:block>
+</body>
+</html>

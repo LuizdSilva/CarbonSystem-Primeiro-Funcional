@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::content}, ~{::scriptsExtra})}">
+<head><title>Dashboard</title></head>
+<body>
+
+<th:block th:fragment="content">
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+        <div class="kpi-card ok">
+            <span class="kpi-label">Estações Online</span>
+            <span class="kpi-value" th:text="${kpis.onlineStations}">0</span>
+            <span class="kpi-unit">de <span th:text="${kpis.totalStations}">0</span> totais</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-label">CO₂ Médio 24h</span>
+            <span class="kpi-value" th:text="${kpis.avgCo2Last24h}">0</span>
+            <span class="kpi-unit">ppm</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-label">PM Médio 24h</span>
+            <span class="kpi-value" th:text="${kpis.avgPmLast24h}">0</span>
+            <span class="kpi-unit">μg/m³</span>
+        </div>
+        <div class="kpi-card" th:classappend="${kpis.activeAlerts > 0} ? 'danger' : 'ok'">
+            <span class="kpi-label">Alertas Ativos</span>
+            <span class="kpi-value" th:text="${kpis.activeAlerts}">0</span>
+            <span class="kpi-unit">não reconhecidos</span>
+        </div>
+        <div class="kpi-card ok">
+            <span class="kpi-label">Créditos de Carbono</span>
+            <span class="kpi-value" th:text="${kpis.totalCarbonCredits}">0</span>
+            <span class="kpi-unit">pontos acumulados</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-label">Leituras Hoje</span>
+            <span class="kpi-value" th:text="${kpis.readingsToday}">0</span>
+            <span class="kpi-unit">registros</span>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="charts-grid">
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>CO₂ — Últimas 24h (por estação)</h3>
+                <span class="chart-badge">ppm</span>
+            </div>
+            <div class="chart-body">
+                <canvas id="co2Chart" height="120"></canvas>
+            </div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>Partículas PM — Últimas 24h</h3>
+                <span class="chart-badge">μg/m³</span>
+            </div>
+            <div class="chart-body">
+                <canvas id="pmChart" height="120"></canvas>
+            </div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>Comparativo por Estação</h3>
+                <span class="chart-badge">atual</span>
+            </div>
+            <div class="chart-body">
+                <canvas id="stationChart" height="120"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="table-card" th:if="${not #lists.isEmpty(kpis.stationStatuses)}">
+        <div class="table-card-header">
+            <h3>Status das Estações</h3>
+        </div>
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Código</th><th>Nome</th><th>Localização</th>
+                <th>Status</th><th>Último CO₂</th><th>Último PM</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="s : ${kpis.stationStatuses}">
+                <td class="font-mono" th:text="${s.stationCode}">ST-001</td>
+                <td th:text="${s.name}">Estação</td>
+                <td th:text="${s.location}">Local</td>
+                <td>
+                    <span class="status-badge"
+                          th:classappend="${s.status.name() == 'ONLINE'} ? 'badge-online' :
+                                         (${s.status.name() == 'OFFLINE'} ? 'badge-offline' : 'badge-maintenance')"
+                          th:text="${s.status}">-</span>
+                </td>
+                <td th:text="${s.lastCo2 != null ? #numbers.formatDecimal(s.lastCo2,1,1) + ' ppm' : '-'}">-</td>
+                <td th:text="${s.lastPm  != null ? #numbers.formatDecimal(s.lastPm,1,1)  + ' μg/m³' : '-'}">-</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+</th:block>
+
+<th:block th:fragment="scriptsExtra">
+    <script th:inline="javascript">
+        const co2ChartData = [];
+        const pmChartData  = [];
+       
+    </script>
+    <script src="/js/dashboard.js"></script>
+</th:block>
+
+</body>
+</html>
