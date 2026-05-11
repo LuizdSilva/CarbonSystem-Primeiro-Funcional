@@ -12,7 +12,6 @@ com\carbontreesystem\model\Station.class
 com\carbontreesystem\model\ConformityParameter.class
 com\carbontreesystem\service\CarbonCreditService.class
 com\carbontreesystem\repository\CarbonCreditRepository.class
-com\carbontreesystem\controller\SensorController.class
 com\carbontreesystem\controller\DashboardController.class
 com\carbontreesystem\model\User$UserBuilder.class
 com\carbontreesystem\service\AlertService.class
@@ -27,6 +26,8 @@ com\carbontreesystem\controller\AlertController.class
 com\carbontreesystem\model\Alert$AlertType.class
 com\carbontreesystem\dto\MqttPayloadDto.class
 com\carbontreesystem\model\SensorReading.class
+com\carbontreesystem\controller\DatabaseWebController.class
+com\carbontreesystem\controller\EmissionsController.class
 com\carbontreesystem\model\Alert$AlertBuilder.class
 com\carbontreesystem\model\ConformityParameter$ConformityParameterBuilder.class
 com\carbontreesystem\dto\SensorChartDto$SensorChartDtoBuilder.class
@@ -34,13 +35,10 @@ com\carbontreesystem\model\Station$StationStatus.class
 com\carbontreesystem\repository\UserRepository.class
 com\carbontreesystem\model\CarbonCredit$CarbonCreditBuilder.class
 com\carbontreesystem\model\Alert$AlertSeverity.class
-com\carbontreesystem\repository\SensorRepository.class
 com\carbontreesystem\dto\StationStatusDto$StationStatusDtoBuilder.class
 com\carbontreesystem\service\UserService.class
-com\carbontreesystem\dto\HistoricoCarbonDTO.class
 com\carbontreesystem\dto\AlertDto$AlertDtoBuilder.class
 com\carbontreesystem\dto\StationStatusDto.class
-com\carbontreesystem\dto\SensorLeituraDTO.class
 com\carbontreesystem\controller\StationsWebController.class
 com\carbontreesystem\model\Alert.class
 com\carbontreesystem\controller\ApiController.class

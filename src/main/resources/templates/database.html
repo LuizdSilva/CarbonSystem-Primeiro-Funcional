@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::content}, ~{::scriptsExtra})}">
+<head><title>Banco de Dados</title></head>
+<body>
+
+<th:block th:fragment="content">
+
+    <!-- KPIs do banco -->
+    <div class="kpi-grid" style="margin-bottom: 1.5rem;">
+
+        <div class="kpi-card ok">
+            <span class="kpi-label">Conexão</span>
+            <span class="kpi-value" style="font-size:1.4rem;" th:text="${dbStatus}">OK</span>
+            <span class="kpi-unit">PostgreSQL</span>
+        </div>
+
+        <div class="kpi-card">
+            <span class="kpi-label">Total de Estações</span>
+            <span class="kpi-value" th:text="${counts['stations']}">0</span>
+            <span class="kpi-unit">registros</span>
+        </div>
+
+        <div class="kpi-card">
+            <span class="kpi-label">Leituras de Sensores</span>
+            <span class="kpi-value" th:text="${counts['readings']}">0</span>
+            <span class="kpi-unit">registros</span>
+        </div>
+
+        <div class="kpi-card" th:classappend="${counts['alerts'] > 0} ? 'danger' : 'ok'">
+            <span class="kpi-label">Alertas</span>
+            <span class="kpi-value" th:text="${counts['alerts']}">0</span>
+            <span class="kpi-unit">registros</span>
+        </div>
+
+        <div class="kpi-card">
+            <span class="kpi-label">Usuários</span>
+            <span class="kpi-value" th:text="${counts['users']}">0</span>
+            <span class="kpi-unit">registros</span>
+        </div>
+
+        <div class="kpi-card ok">
+            <span class="kpi-label">Créditos de Carbono</span>
+            <span class="kpi-value" th:text="${counts['credits']}">0</span>
+            <span class="kpi-unit">registros</span>
+        </div>
+
+    </div>
+
+    <!-- Info de conexão -->
+    <div class="table-card" style="margin-bottom: 1.5rem;">
+        <div class="table-card-header">
+            <h3>🗄️ Informações da Conexão</h3>
+        </div>
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Parâmetro</th>
+                <th>Valor</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="entry : ${dbInfo}">
+                <td class="font-mono" th:text="${entry.key}">-</td>
+                <td th:text="${entry.value}">-</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Tabela de usuários -->
+    <div class="table-card" style="margin-bottom: 1.5rem;"
+         th:if="${users != null and !users.isEmpty()}">
+        <div class="table-card-header">
+            <h3>👤 Usuários Cadastrados</h3>
+        </div>
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Nome Completo</th>
+                <th>E-mail</th>
+                <th>Perfil</th>
+                <th>Ativo</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="u : ${users}">
+                <td class="font-mono" th:text="${u.id}">-</td>
+                <td class="font-mono" th:text="${u.username}">-</td>
+                <td th:text="${u.fullName ?: '-'}">-</td>
+                <td th:text="${u.email ?: '-'}">-</td>
+                <td>
+                    <span class="status-badge"
+                          th:classappend="${u.role?.name() == 'ADMIN'} ? 'badge-offline' : 'badge-online'"
+                          th:text="${u.role}">-</span>
+                </td>
+                <td>
+                    <span class="status-badge"
+                          th:classappend="${u.enabled} ? 'badge-online' : 'badge-offline'"
+                          th:text="${u.enabled} ? 'SIM' : 'NÃO'">-</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Parâmetros de conformidade -->
+    <div class="table-card"
+         th:if="${conformityParams != null and !conformityParams.isEmpty()}">
+        <div class="table-card-header">
+            <h3>📏 Parâmetros de Conformidade</h3>
+        </div>
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Parâmetro</th>
+                <th>Limite CO₂ (ppm)</th>
+                <th>Limite PM (μg/m³)</th>
+                <th>Referência Legal</th>
+                <th>Ativo</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="p : ${conformityParams}">
+                <td th:text="${p.parameterName}">-</td>
+                <td class="font-mono" th:text="${p.maxCo2Level}">-</td>
+                <td class="font-mono" th:text="${p.maxPmLevel}">-</td>
+                <td th:text="${p.legalReference ?: '-'}">-</td>
+                <td>
+                    <span class="status-badge"
+                          th:classappend="${p.active} ? 'badge-online' : 'badge-offline'"
+                          th:text="${p.active} ? 'SIM' : 'NÃO'">-</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+</th:block>
+
+<th:block th:fragment="scriptsExtra">
+    <!-- sem scripts extras necessários -->
+</th:block>
+
+</body>
+</html>

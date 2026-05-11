@@ -48,12 +48,15 @@
     <div class="sub">Sistema de Monitoramento Ambiental</div>
 
     <!-- Formulário Spring Security -->
+<form th:action="@{/login}" method="post">
+    <input type="text" name="username" placeholder="Usuário" required />
+    <input type="password" name="password" placeholder="Senha" required />
+    
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+    
+    <button type="submit">Entrar</button>
+</form>
     <form th:action="@{/login}" method="post">
-        <input type="text"     name="username" placeholder="Usuário"  required autofocus/>
-        <input type="password" name="password" placeholder="Senha"    required/>
-        <button type="submit">Entrar</button>
-    </form>
-
     <p class="msg-error"   th:if="${param.error}">Usuário ou senha incorretos.</p>
     <p class="msg-success" th:if="${param.logout}">Sessão encerrada com sucesso.</p>
     <p class="msg-error"   th:if="${param.expired}">Sessão expirada. Faça login novamente.</p>

@@ -17,8 +17,20 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
+import java.util.Map;
+import com.carbontreesystem.repository.AlertRepository;
+import com.carbontreesystem.repository.CarbonCreditRepository;
+import com.carbontreesystem.repository.ConformityParameterRepository;
+import com.carbontreesystem.repository.UserRepository;
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.util.LinkedHashMap;
 
+// ================================================================
 // LOGIN E ROOT
+// ================================================================
 @Controller
 class LoginController {
 
@@ -33,8 +45,9 @@ class LoginController {
     }
 }
 
-
+// ================================================================
 // DASHBOARD
+// ================================================================
 @Controller
 @RequestMapping("/dashboard")
 @RequiredArgsConstructor
@@ -52,7 +65,9 @@ class DashboardController {
     }
 }
 
+// ================================================================
 // ESTAÇÕES
+// ================================================================
 @Controller
 @RequestMapping("/stations")
 @RequiredArgsConstructor
@@ -116,7 +131,9 @@ class StationsWebController {
     }
 }
 
+// ================================================================
 // ALERTAS
+// ================================================================
 @Controller
 @RequestMapping("/alerts")
 @RequiredArgsConstructor
@@ -133,7 +150,9 @@ class AlertController {
     }
 }
 
+// ================================================================
 // RELATÓRIOS
+// ================================================================
 @Controller
 @RequestMapping("/reports")
 @RequiredArgsConstructor
@@ -146,6 +165,26 @@ class ReportController {
     public String reportsPage(Model model) {
         model.addAttribute("pageTitle", "Relatórios de Auditoria");
         model.addAttribute("currentUri", "/reports");
+        try {
+            Map<String, Object> auditData = reportService.getAuditData(30);
+            model.addAttribute("auditData", auditData);
+
+            List<?> credits = (List<?>) auditData.get("credits");
+            double total = credits.stream()
+                .mapToDouble(c -> {
+                    try {
+                        return (double) c.getClass().getMethod("getCreditsCalculated").invoke(c);
+                    } catch (Exception e) {
+                        return 0.0;
+                    }
+                }).sum();
+            model.addAttribute("totalCredits", total);
+
+        } catch (Exception e) {
+            log.error("Erro ao carregar dados do relatório: {}", e.getMessage());
+            model.addAttribute("auditData", null);
+            model.addAttribute("totalCredits", 0.0);
+        }
         return "reports";
     }
 
@@ -164,4 +203,70 @@ class ReportController {
             return ResponseEntity.internalServerError().build();
         }
     }
-}
+} // ← FIM ReportController
+
+// ================================================================
+// BANCO DE DADOS
+// ================================================================
+@Controller
+@RequestMapping("/database")
+@RequiredArgsConstructor
+class DatabaseWebController {
+
+    private final StationRepository stationRepo;
+    private final SensorReadingRepository readingRepo;
+    private final AlertRepository alertRepo;
+    private final UserRepository userRepo;
+    private final CarbonCreditRepository creditRepo;
+    private final ConformityParameterRepository conformityRepo;
+    private final DataSource dataSource;
+
+    @GetMapping
+    public String databasePage(Model model) {
+        model.addAttribute("pageTitle", "Banco de Dados");
+        model.addAttribute("currentUri", "/database");
+
+        Map<String, Long> counts = new LinkedHashMap<>();
+        counts.put("stations", stationRepo.count());
+        counts.put("readings", readingRepo.count());
+        counts.put("alerts",   alertRepo.count());
+        counts.put("users",    userRepo.count());
+        counts.put("credits",  creditRepo.count());
+        model.addAttribute("counts", counts);
+
+        Map<String, String> dbInfo = new LinkedHashMap<>();
+        String dbStatus = "CONECTADO";
+        try (Connection conn = dataSource.getConnection()) {
+            DatabaseMetaData meta = conn.getMetaData();
+            dbInfo.put("Banco de Dados", meta.getDatabaseProductName() + " " + meta.getDatabaseProductVersion());
+            dbInfo.put("URL",            meta.getURL());
+            dbInfo.put("Usuário",        meta.getUserName());
+            dbInfo.put("Driver",         meta.getDriverName() + " " + meta.getDriverVersion());
+            dbInfo.put("Schema padrão",  conn.getSchema() != null ? conn.getSchema() : "public");
+        } catch (Exception e) {
+            dbStatus = "ERRO: " + e.getMessage();
+        }
+        model.addAttribute("dbStatus", dbStatus);
+        model.addAttribute("dbInfo",   dbInfo);
+
+        model.addAttribute("users",            userRepo.findAll());
+        model.addAttribute("conformityParams", conformityRepo.findAll());
+
+        return "database";
+    }
+} 
+
+// ================================================================
+// CALCULADORA EMISSÕES
+// ================================================================
+@Controller
+@RequestMapping("/emissions")
+class EmissionsController {
+
+    @GetMapping
+    public String emissionsPage(Model model) {
+        model.addAttribute("pageTitle", "Calculadora IPCC/LMDI");
+        model.addAttribute("currentUri", "/emissions");
+        return "emissions";
+    }
+} 

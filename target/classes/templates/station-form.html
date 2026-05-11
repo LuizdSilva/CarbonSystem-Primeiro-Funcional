@@ -7,6 +7,10 @@
 
     <div class="form-card">
         <form th:action="@{/stations/save}" th:object="${station}" method="post" class="ct-form">
+
+            <!-- Token CSRF — obrigatório para POST com Spring Security -->
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
             <input type="hidden" th:field="*{id}" th:if="${station.id != null}"/>
 
             <div class="form-row">

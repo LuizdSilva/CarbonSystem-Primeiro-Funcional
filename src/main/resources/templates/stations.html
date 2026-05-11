@@ -8,7 +8,7 @@
     <div class="page-header">
         <div class="header-text">
             <h2>Estações de Monitoramento</h2>
-            <p>Gerencie os hardwares instalados para coleta de CO₂ e partículas.</p>
+            <p>Gerencie os pontos instalados para coleta de CO₂ e partículas.</p>
         </div>
         <div class="header-actions">
             <a th:href="@{/stations/new}" class="btn-primary">+ Nova Estação</a>
@@ -33,14 +33,19 @@
                 <td th:text="${s.location}">Local</td>
                 <td>
                     <span class="status-badge"
-                          th:classappend="${s.status.name() == 'ONLINE'}   ? 'badge-online' :
-                                         (${s.status.name() == 'OFFLINE'}  ? 'badge-offline' : 'badge-maintenance')"
-                          th:text="${s.status}">ONLINE</span>
+                          th:classappend="${s.status != null and s.status.name() == 'ONLINE'}  ? 'badge-online' :
+                                         (${s.status != null and s.status.name() == 'OFFLINE'} ? 'badge-offline' : 'badge-maintenance')"
+                          th:text="${s.status != null} ? ${s.status} : '-'">ONLINE</span>
                 </td>
                 <td class="table-actions">
                     <a th:href="@{/stations/{id}(id=${s.id})}"      class="btn-icon" title="Ver Detalhes">📊</a>
                     <a th:href="@{/stations/edit/{id}(id=${s.id})}" class="btn-icon" title="Editar">✏️</a>
-                    <form th:action="@{/stations/delete/{id}(id=${s.id})}" method="post" style="display:inline"
+                    <!--
+                        th:action com Thymeleaf Security injeta o CSRF automaticamente.
+                        Não é necessário o <input hidden> manual — isso causava o erro.
+                    -->
+                    <form th:action="@{/stations/delete/{id}(id=${s.id})}" method="post"
+                          style="display:inline"
                           onsubmit="return confirm('Excluir esta estação?')">
                         <button type="submit" class="btn-icon text-danger">🗑️</button>
                     </form>

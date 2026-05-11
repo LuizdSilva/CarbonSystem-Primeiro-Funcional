@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::content}, ~{::scripts-extra})}">
+<head><title>Alertas Críticos</title></head>
+<body>
+
+<th:block th:fragment="content">
+
+  <!-- ── Cabeçalho ── -->
+  <div class="page-header">
+    <div class="header-text">
+      <h2>Alertas Críticos</h2>
+      <p>Notificações de leituras acima dos limites legais estabelecidos</p>
+    </div>
+    <div class="header-actions">
+      <!-- Contador de alertas ativos -->
+      <div class="alert-counter" th:if="${not #lists.isEmpty(alerts)}">
+        <span class="alert-counter-dot"></span>
+        <span th:text="${#lists.size(alerts)} + ' ativo(s)'"
+              style="font-size:0.82rem;font-weight:700;color:var(--danger)">0 ativo(s)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       ESTADO VAZIO
+  ══════════════════════════════════════ -->
+  <th:block th:if="${#lists.isEmpty(alerts)}">
+    <div class="alerts-empty">
+      <div class="alerts-empty-icon">✅</div>
+      <div class="alerts-empty-title">Tudo em ordem</div>
+      <div class="alerts-empty-sub">
+        Nenhum alerta ativo no momento. Todas as estações estão dentro dos limites legais.
+      </div>
+      <div class="alerts-empty-meta">
+        Última verificação: <span id="lastCheck">--:--:--</span>
+      </div>
+    </div>
+  </th:block>
+
+  <!-- ══════════════════════════════════════
+       LISTA DE ALERTAS
+  ══════════════════════════════════════ -->
+  <th:block th:if="${not #lists.isEmpty(alerts)}">
+
+    <!-- Filtros de severidade -->
+    <div class="alert-filters">
+      <button class="af-btn af-btn-all active" onclick="filtrarAlertas('ALL', this)">
+        Todos <span class="af-count" th:text="${#lists.size(alerts)}">0</span>
+      </button>
+      <button class="af-btn af-btn-critical" onclick="filtrarAlertas('CRITICAL', this)">
+        🚨 Crítico
+      </button>
+      <button class="af-btn af-btn-high" onclick="filtrarAlertas('HIGH', this)">
+        🔴 Alto
+      </button>
+      <button class="af-btn af-btn-medium" onclick="filtrarAlertas('MEDIUM', this)">
+        🟡 Médio
+      </button>
+      <button class="af-btn af-btn-low" onclick="filtrarAlertas('LOW', this)">
+        🟢 Baixo
+      </button>
+    </div>
+
+    <!-- Cards de alerta -->
+    <div class="alerts-grid" id="alertsGrid">
+      <div th:each="alert : ${alerts}"
+           class="alert-card"
+           th:attr="data-severity=${alert.severity}">
+
+        <!-- Faixa de severidade lateral -->
+        <div class="alert-card-stripe"
+             th:classappend="${alert.severity.name() == 'CRITICAL'} ? 'stripe-critical' :
+                             (${alert.severity.name() == 'HIGH'}     ? 'stripe-high'     :
+                             (${alert.severity.name() == 'MEDIUM'}   ? 'stripe-medium'   : 'stripe-low'))">
+        </div>
+
+        <div class="alert-card-body">
+
+          <!-- Linha superior: estação + severidade + tipo -->
+          <div class="alert-card-top">
+            <div class="alert-card-station">
+              <span class="ac-station-icon">📡</span>
+              <span th:text="${alert.station != null} ? ${alert.station.name} : 'Estação desconhecida'">
+                Estação
+              </span>
+            </div>
+            <div class="alert-card-badges">
+              <!-- Badge de tipo -->
+              <span class="alert-type-badge"
+                    th:text="${alert.type}">TIPO</span>
+              <!-- Badge de severidade -->
+              <span class="alert-sev-badge"
+                    th:classappend="${alert.severity.name() == 'CRITICAL'} ? 'sev-critical' :
+                                    (${alert.severity.name() == 'HIGH'}     ? 'sev-high'     :
+                                    (${alert.severity.name() == 'MEDIUM'}   ? 'sev-medium'   : 'sev-low'))"
+                    th:text="${alert.severity}">SEV</span>
+            </div>
+          </div>
+
+          <!-- Mensagem -->
+          <div class="alert-card-message" th:text="${alert.message}">Mensagem do alerta</div>
+
+          <!-- Linha de valores -->
+          <div class="alert-card-values">
+            <div class="acv-item acv-danger">
+              <span class="acv-label">Valor medido</span>
+              <span class="acv-val"
+                    th:text="${alert.triggerValue != null} ? ${#numbers.formatDecimal(alert.triggerValue,1,1)} : '—'">—</span>
+            </div>
+            <div class="acv-sep">vs</div>
+            <div class="acv-item acv-limit">
+              <span class="acv-label">Limite legal</span>
+              <span class="acv-val"
+                    th:text="${alert.limitValue != null} ? ${#numbers.formatDecimal(alert.limitValue,1,1)} : '—'">—</span>
+            </div>
+            <!-- Percentual acima do limite -->
+            <div class="acv-item acv-over"
+                 th:if="${alert.triggerValue != null and alert.limitValue != null and alert.limitValue > 0}">
+              <span class="acv-label">Excesso</span>
+              <span class="acv-val acv-val-red"
+                    th:text="${#numbers.formatDecimal(((alert.triggerValue - alert.limitValue) / alert.limitValue) * 100, 1, 1)} + '%'">0%</span>
+            </div>
+          </div>
+
+          <!-- Rodapé: data/hora -->
+          <div class="alert-card-footer">
+            <span class="acf-time">
+              🕐
+              <span th:text="${#temporals.format(alert.triggeredAt, 'dd/MM/yyyy HH:mm:ss')}">--</span>
+            </span>
+            <span class="acf-ago" th:attr="data-ts=${alert.triggeredAt}">—</span>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Mensagem quando filtro não encontra resultado -->
+    <div class="alerts-filter-empty" id="filterEmpty" style="display:none">
+      <p>Nenhum alerta com essa severidade no momento.</p>
+    </div>
+
+  </th:block>
+
+</th:block>
+
+<!-- ══════════════════════════════════════
+     ESTILOS
+══════════════════════════════════════ -->
+<th:block th:fragment="scripts-extra">
+<style>
+/* ─── Contador ─── */
+.alert-counter {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.3);
+  padding: 6px 14px; border-radius: 20px;
+}
+.alert-counter-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--danger);
+  box-shadow: 0 0 8px var(--danger);
+  animation: alertPulse 1.2s ease infinite;
+}
+@keyframes alertPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+
+/* ─── Estado vazio ─── */
+.alerts-empty {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 64px 32px;
+  text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+}
+.alerts-empty-icon { font-size: 52px; line-height: 1; }
+.alerts-empty-title {
+  font-size: 1.2rem; font-weight: 800;
+  color: var(--primary-light);
+  font-family: var(--font-mono);
+}
+.alerts-empty-sub  { font-size: 0.84rem; color: var(--text-muted); max-width: 380px; line-height: 1.6; }
+.alerts-empty-meta { font-size: 0.72rem; color: var(--text-dim); font-family: var(--font-mono); margin-top: 4px; }
+
+/* ─── Filtros ─── */
+.alert-filters {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.af-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px;
+  background: var(--bg-card2); border: 1px solid var(--border);
+  border-radius: 20px; font-size: 0.78rem; font-weight: 600;
+  color: var(--text-muted); cursor: pointer;
+  transition: all 0.15s; font-family: var(--font);
+}
+.af-btn:hover { border-color: var(--border-light); color: var(--text); }
+.af-btn.active { background: var(--bg-card); color: var(--text); border-color: var(--border-light); }
+.af-count {
+  background: var(--danger); color: #fff;
+  font-size: 0.65rem; font-weight: 800;
+  padding: 1px 6px; border-radius: 10px; min-width: 20px; text-align: center;
+}
+
+/* ─── Grade de cards ─── */
+.alerts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  gap: 14px;
+}
+
+/* ─── Card ─── */
+.alert-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.alert-card:hover { border-color: var(--border-light); box-shadow: 0 2px 16px rgba(0,0,0,0.3); }
+
+/* Faixa lateral de cor */
+.alert-card-stripe {
+  width: 4px; flex-shrink: 0;
+}
+.stripe-critical { background: #dc2626; }
+.stripe-high     { background: #ef4444; }
+.stripe-medium   { background: #f59e0b; }
+.stripe-low      { background: #22c55e; }
+
+.alert-card-body { flex: 1; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+
+/* Linha superior */
+.alert-card-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.alert-card-station {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 0.88rem; font-weight: 700; color: var(--text);
+}
+.ac-station-icon { font-size: 0.9rem; }
+.alert-card-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* Badge de tipo */
+.alert-type-badge {
+  font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
+  background: var(--bg-card2); border: 1px solid var(--border-light);
+  color: var(--text-muted); padding: 2px 8px; border-radius: 4px;
+  font-family: var(--font-mono);
+}
+
+/* Badge de severidade */
+.alert-sev-badge {
+  font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px;
+  padding: 2px 10px; border-radius: 20px;
+}
+.sev-critical { background: rgba(220,38,38,0.15); color: #fca5a5; border: 1px solid rgba(220,38,38,0.4); }
+.sev-high     { background: rgba(239,68,68,0.12);  color: #f87171; border: 1px solid rgba(239,68,68,0.35); }
+.sev-medium   { background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.35); }
+.sev-low      { background: rgba(34,197,94,0.10);  color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+
+/* Mensagem */
+.alert-card-message {
+  font-size: 0.84rem; color: var(--text-muted); line-height: 1.5;
+}
+
+/* Valores */
+.alert-card-values {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--bg-card2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 10px 14px;
+  flex-wrap: wrap;
+}
+.acv-item { display: flex; flex-direction: column; gap: 2px; }
+.acv-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-dim); font-weight: 600; }
+.acv-val   { font-family: var(--font-mono); font-size: 1rem; font-weight: 800; color: var(--text); }
+.acv-val-red { color: var(--danger) !important; }
+.acv-sep   { font-size: 0.72rem; color: var(--text-dim); font-weight: 600; margin: 0 4px; }
+.acv-over  { margin-left: auto; }
+
+/* Rodapé */
+.alert-card-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 8px; border-top: 1px solid var(--border);
+}
+.acf-time { font-size: 0.72rem; color: var(--text-dim); font-family: var(--font-mono); }
+.acf-ago  { font-size: 0.7rem; color: var(--text-dim); font-style: italic; }
+
+/* Mensagem filtro vazio */
+.alerts-filter-empty {
+  text-align: center; padding: 48px;
+  color: var(--text-dim); font-size: 0.84rem;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+@media (max-width: 700px) {
+  .alerts-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+<script>
+/* Filtro por severidade */
+function filtrarAlertas(sev, btn) {
+  document.querySelectorAll('.af-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const cards  = document.querySelectorAll('.alert-card');
+  const empty  = document.getElementById('filterEmpty');
+  let   visivel = 0;
+
+  cards.forEach(card => {
+    const match = sev === 'ALL' || card.dataset.severity === sev;
+    card.style.display = match ? '' : 'none';
+    if (match) visivel++;
+  });
+
+  if (empty) empty.style.display = visivel === 0 ? '' : 'none';
+}
+
+/* "Há X minutos" dinâmico */
+function calcAgo(ts) {
+  if (!ts) return '—';
+  const now  = new Date();
+  const then = new Date(ts);
+  const diff = Math.floor((now - then) / 1000);
+  if (diff < 60)   return 'agora mesmo';
+  if (diff < 3600) return 'há ' + Math.floor(diff / 60) + ' min';
+  if (diff < 86400) return 'há ' + Math.floor(diff / 3600) + 'h';
+  return 'há ' + Math.floor(diff / 86400) + 'd';
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  /* Atualiza relógio do estado vazio */
+  const lc = document.getElementById('lastCheck');
+  if (lc) {
+    const tick = () => { lc.textContent = new Date().toLocaleTimeString('pt-BR'); };
+    tick(); setInterval(tick, 1000);
+  }
+
+  /* Preenche "há X min" em cada card */
+  document.querySelectorAll('.acf-ago').forEach(el => {
+    const ts = el.dataset.ts;
+    el.textContent = calcAgo(ts);
+  });
+
+  /* Atualiza a cada minuto */
+  setInterval(() => {
+    document.querySelectorAll('.acf-ago').forEach(el => {
+      el.textContent = calcAgo(el.dataset.ts);
+    });
+  }, 60000);
+});
+</script>
+</th:block>
+
+</body>
+</html>

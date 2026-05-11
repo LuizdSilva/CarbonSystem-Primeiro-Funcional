@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::content}, ~{::scriptsExtra})}">
+<head><title>Relatórios</title></head>
+<body>
+
+<th:block th:fragment="content">
+
+    <!-- Configuração do período -->
+    <div class="kpi-grid" style="margin-bottom: 1.5rem;">
+        <div class="kpi-card ok" style="grid-column: span 2;">
+            <span class="kpi-label">Período do Relatório</span>
+            <div style="display:flex; gap: 0.75rem; align-items: center; margin-top: 0.5rem; flex-wrap: wrap;">
+                <a href="/reports/audit/download?days=7"   class="btn-report">📄 Últimos 7 dias</a>
+                <a href="/reports/audit/download?days=30"  class="btn-report active">📄 Últimos 30 dias</a>
+                <a href="/reports/audit/download?days=90"  class="btn-report">📄 Últimos 90 dias</a>
+                <a href="/reports/audit/download?days=365" class="btn-report">📄 Último ano</a>
+            </div>
+            <span class="kpi-unit" style="margin-top:0.5rem;">Clique para baixar o PDF de auditoria</span>
+        </div>
+
+        <div class="kpi-card">
+            <span class="kpi-label">Total de Estações</span>
+            <span class="kpi-value" th:text="${auditData != null ? auditData['stations'].size() : 0}">0</span>
+            <span class="kpi-unit">cadastradas</span>
+        </div>
+
+        <div class="kpi-card" th:classappend="${auditData != null and auditData['alerts'].size() > 0} ? 'danger' : 'ok'">
+            <span class="kpi-label">Alertas no Período</span>
+            <span class="kpi-value" th:text="${auditData != null ? auditData['alerts'].size() : 0}">0</span>
+            <span class="kpi-unit">últimos 30 dias</span>
+        </div>
+
+        <div class="kpi-card">
+            <span class="kpi-label">Leituras no Período</span>
+            <span class="kpi-value" th:text="${auditData != null ? auditData['readings'].size() : 0}">0</span>
+            <span class="kpi-unit">registros coletados</span>
+        </div>
+
+        <!-- totalCredits é calculado no ReportController e passado pronto ao model -->
+        <div class="kpi-card ok">
+            <span class="kpi-label">Créditos de Carbono</span>
+            <span class="kpi-value"
+                  th:text="${totalCredits != null} ? ${#numbers.formatDecimal(totalCredits, 1, 2)} : '0,00'">0,00</span>
+            <span class="kpi-unit">pontos acumulados</span>
+        </div>
+    </div>
+
+    <!-- Download personalizado -->
+    <div class="table-card" style="margin-bottom: 1.5rem;">
+        <div class="table-card-header">
+            <h3>📥 Download Personalizado</h3>
+        </div>
+        <div style="padding: 1.25rem; display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+            <div style="display:flex; flex-direction:column; gap:0.4rem;">
+                <label style="font-size:0.78rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">
+                    Período (dias)
+                </label>
+                <input type="number" id="customDays" value="30" min="1" max="365"
+                       style="background:var(--bg-card); border:1px solid var(--border); border-radius:6px;
+                              color:var(--text-primary); padding:0.5rem 0.75rem; font-size:0.95rem;
+                              width: 140px; outline:none;"/>
+            </div>
+            <button onclick="downloadCustomReport()"
+                    style="background:var(--accent-green); color:#fff; border:none; border-radius:6px;
+                           padding:0.55rem 1.25rem; font-size:0.9rem; font-weight:600; cursor:pointer;
+                           display:flex; align-items:center; gap:0.4rem;">
+                📄 Baixar PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabela de alertas -->
+    <div class="table-card" th:if="${auditData != null and !auditData['alerts'].isEmpty()}">
+        <div class="table-card-header">
+            <h3>🔔 Alertas do Período (últimos 30 dias)</h3>
+        </div>
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Data/Hora</th>
+                <th>Estação</th>
+                <th>Severidade</th>
+                <th>Tipo</th>
+                <th>Mensagem</th>
+                <th>Valor / Limite</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="a : ${auditData['alerts']}">
+                <td class="font-mono"
+                    th:text="${a.triggeredAt != null} ? ${#temporals.format(a.triggeredAt, 'dd/MM/yyyy HH:mm')} : '-'">-</td>
+                <td th:text="${a.station != null} ? ${a.station.stationCode} : 'N/A'">-</td>
+                <td>
+                    <span class="status-badge"
+                          th:classappend="${a.severity != null and a.severity.name() == 'CRITICAL'} ? 'badge-offline' :
+                                         (${a.severity != null and a.severity.name() == 'WARNING'}  ? 'badge-maintenance' : 'badge-online')"
+                          th:text="${a.severity != null} ? ${a.severity.name()} : '-'">-</span>
+                </td>
+                <td th:text="${a.type != null} ? ${a.type.name()} : '-'">-</td>
+                <td th:text="${a.message != null} ? ${a.message} : '-'">-</td>
+                <td th:text="${a.triggerValue != null and a.limitValue != null} ?
+                             ${#numbers.formatDecimal(a.triggerValue, 1, 1) + ' / ' + #numbers.formatDecimal(a.limitValue, 1, 1)} : '-'">-</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Sem alertas -->
+    <div class="table-card" th:if="${auditData == null or auditData['alerts'].isEmpty()}">
+        <div class="table-card-header">
+            <h3>🔔 Alertas do Período</h3>
+        </div>
+        <div style="padding: 2rem; text-align: center; color: var(--text-muted);">
+            <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">✅</div>
+            <p style="font-size: 0.95rem;">Nenhum alerta registrado nos últimos 30 dias.</p>
+        </div>
+    </div>
+
+    <!-- Tabela de estações -->
+    <div class="table-card" style="margin-top: 1.5rem;"
+         th:if="${auditData != null and !auditData['stations'].isEmpty()}">
+        <div class="table-card-header">
+            <h3>📡 Estações Monitoradas</h3>
+        </div>
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Código</th>
+                <th>Nome</th>
+                <th>Localização</th>
+                <th>Status</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="s : ${auditData['stations']}">
+                <td class="font-mono" th:text="${s.stationCode}">ST-001</td>
+                <td th:text="${s.name}">Estação</td>
+                <td th:text="${s.location}">Local</td>
+                <td>
+                    <span class="status-badge"
+                          th:classappend="${s.status != null and s.status.name() == 'ONLINE'} ? 'badge-online' :
+                                         (${s.status != null and s.status.name() == 'OFFLINE'} ? 'badge-offline' : 'badge-maintenance')"
+                          th:text="${s.status != null} ? ${s.status} : '-'">-</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+</th:block>
+
+<th:block th:fragment="scriptsExtra">
+    <script>
+        function downloadCustomReport() {
+            const days = document.getElementById('customDays').value || 30;
+            window.location.href = '/reports/audit/download?days=' + days;
+        }
+    </script>
+    <style>
+        .btn-report {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.45rem 1rem;
+            background: var(--bg-hover, #1e2a1e);
+            border: 1px solid var(--border, #2d3d2d);
+            border-radius: 6px;
+            color: var(--text-secondary, #a0b8a0);
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.15s ease;
+        }
+        .btn-report:hover,
+        .btn-report.active {
+            background: var(--accent-green, #22c55e);
+            border-color: var(--accent-green, #22c55e);
+            color: #fff;
+        }
+    </style>
+</th:block>
+
+</body>
+</html>
