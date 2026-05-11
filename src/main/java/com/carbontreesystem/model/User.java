@@ -15,9 +15,11 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NonNull
     @Column(unique = true, nullable = false)
     private String username;
 
+    @NonNull
     @Column(nullable = false)
     private String password;
 

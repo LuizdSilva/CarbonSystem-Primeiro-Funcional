@@ -15,6 +15,7 @@ public class ConformityParameter {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NonNull
     @Column(nullable = false)
     private String parameterName;
 

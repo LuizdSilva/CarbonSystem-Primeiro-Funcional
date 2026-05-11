@@ -12,6 +12,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -39,15 +40,54 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-@Bean
-public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    http
-        .csrf(csrf -> csrf.disable()) // Desativa segurança de formulário
-        .authorizeHttpRequests(auth -> auth
-            .anyRequest().permitAll() // LIBERA TUDO: Dashboard, Admin, etc.
-        )
-        .headers(headers -> headers.frameOptions(f -> f.sameOrigin()));
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .authenticationProvider(authenticationProvider())
+            .authorizeHttpRequests(auth -> auth
+                // Recursos públicos — sem login
+                .requestMatchers(
+                    "/login", "/logout",
+                    "/css/**", "/js/**", "/images/**", "/favicon.ico",
+                    "/api/mqtt/ingest"   // endpoint dos sensores Arduino
+                ).permitAll()
+                // Área admin
+                .requestMatchers("/admin/**", "/database/**").hasRole("ADMIN")
+                // Todo o resto exige autenticação
+                .anyRequest().authenticated()
+            )
+            .formLogin(form -> form
+                .loginPage("/login")
+                .loginProcessingUrl("/login")
+                .defaultSuccessUrl("/dashboard", true)
+                .failureUrl("/login?error=true")
+                .usernameParameter("username")
+                .passwordParameter("password")
+                .permitAll()
+            )
+            .logout(logout -> logout
+                .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
+                .logoutSuccessUrl("/login?logout=true")
+                .deleteCookies("JSESSIONID")
+                .invalidateHttpSession(true)
+                .permitAll()
+            )
+            .sessionManagement(session -> session
+                .maximumSessions(1)
+                .expiredUrl("/login?expired=true")
+            )
+            .headers(headers -> headers
+                // Permite abrir o H2 Console em iframe
+                .frameOptions(frame -> frame.sameOrigin())
+            )
+            .csrf(csrf -> csrf
+                // CSRF ativo em geral — desativado só nas rotas que precisam
+                .ignoringRequestMatchers(
+                    "/h2-console/**",
+                    "/api/mqtt/ingest"
+                )
+            );
 
-    return http.build();
-}
+        return http.build();
+    }
 }

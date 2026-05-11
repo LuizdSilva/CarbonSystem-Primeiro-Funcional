@@ -16,6 +16,7 @@ public class SensorReading {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NonNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "station_id", nullable = false)
     private Station station;
@@ -25,6 +26,7 @@ public class SensorReading {
     private Double temperature;
     private Double humidity;
 
+    @NonNull
     @Column(nullable = false)
     private LocalDateTime recordedAt;
 

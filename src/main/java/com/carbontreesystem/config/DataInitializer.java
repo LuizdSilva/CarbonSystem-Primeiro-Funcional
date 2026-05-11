@@ -29,25 +29,31 @@ public class DataInitializer {
             ConformityParameterRepository conformityRepo
     ) {
         return args -> {
-            log.info("Iniciando a criação de dados de demonstração...");
+            log.info("Iniciando a sincronização de dados de demonstração...");
 
-            // Usuários
-        
-            if (!userRepo.existsByUsername("admin")) {
-                User admin = User.builder()
-                        .username("admin")
-                        .password(passwordEncoder.encode("admin123"))
-                        .email("admin@carbontree.com")
-                        .fullName("Administrador")
-                        .role(User.Role.ADMIN)
-                        .build();
-                
-                if (admin != null) {
-                userRepo.save(admin);
-}
-            }
+            // --- Gerenciamento do Usuário Admin ---
+            userRepo.findByUsername("admin").ifPresentOrElse(
+                admin -> {
+                    log.info("Usuário admin encontrado. Atualizando senha...");
+                    admin.setPassword(passwordEncoder.encode("admin123"));
+                    admin.setRole(User.Role.ADMIN);
+                    userRepo.save(admin);
+                },
+                () -> {
+                    log.info("Criando novo usuário administrador...");
+                    User newAdmin = User.builder()
+                            .username("admin")
+                            .password(passwordEncoder.encode("admin123"))
+                            .email("admin@carbontree.com")
+                            .fullName("Administrador")
+                            .role(User.Role.ADMIN)
+                            .enabled(true)
+                            .build();
+                    if (newAdmin != null) userRepo.save(newAdmin);
+                }
+            );
 
-            // Parâmetros de Conformidade
+            // --- Parâmetros de Conformidade ---
             if (conformityRepo.count() == 0) {
                 ConformityParameter param = ConformityParameter.builder()  
                         .parameterName("Decreto nº 11.550/2023 - CO2")
@@ -57,11 +63,10 @@ public class DataInitializer {
                         .description("Limites legais para emissão de CO2")
                         .active(true)
                         .build();
-                        if (param != null) {
-                        conformityRepo.save(param);
-}            }
+                if (param != null) conformityRepo.save(param);
+            }
 
-            // Estações 
+            // --- Estações ---
             if (stationRepo.count() == 0) {
                 Station s1 = Station.builder()  
                         .stationCode("ST-001")
@@ -72,29 +77,28 @@ public class DataInitializer {
                         .longitude(-47.4500)
                         .lastSeen(LocalDateTime.now())
                         .build();
-                        if (s1 != null) {
-                        s1 = stationRepo.save(s1);
-}
-                // Leituras Simuladas
-                Random rng = new Random();
-                LocalDateTime now = LocalDateTime.now();
-                for (int h = 23; h >= 0; h--) {
-                    SensorReading reading = SensorReading.builder()  
-                            .station(s1)
-                            .co2Level(400 + rng.nextDouble() * 400)
-                            .pmLevel(20 + rng.nextDouble() * 30)
-                            .temperature(20 + rng.nextDouble() * 10)
-                            .humidity(50 + rng.nextDouble() * 30)
-                            .recordedAt(now.minusHours(h))
-                            .source(SensorReading.ReadingSource.SIMULATED)
-                            .build();
-                    if (reading != null) {
-                    readingRepo.save(reading);
-}
+                
+                if (s1 != null) {
+                    s1 = stationRepo.save(s1);
+
+                    Random rng = new Random();
+                    LocalDateTime now = LocalDateTime.now();
+                    for (int h = 23; h >= 0; h--) {
+                        SensorReading reading = SensorReading.builder()  
+                                .station(s1)
+                                .co2Level(400 + rng.nextDouble() * 400)
+                                .pmLevel(20 + rng.nextDouble() * 30)
+                                .temperature(20 + rng.nextDouble() * 10)
+                                .humidity(50 + rng.nextDouble() * 30)
+                                .recordedAt(now.minusHours(h))
+                                .source(SensorReading.ReadingSource.SIMULATED)
+                                .build();
+                        if (reading != null) readingRepo.save(reading);
+                    }
                 }
             }
 
-            log.info("Dados de demonstração criados com sucesso!");
+            log.info("Sincronização de dados concluída!");
         };
     }
 }

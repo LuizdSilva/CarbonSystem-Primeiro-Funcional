@@ -22,10 +22,10 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + username));
 
-        String roleName = user.getRole().name().toUpperCase();        
-        if (!roleName.startsWith("ROLE_")) {
-            roleName = "ROLE_" + roleName;
-        }
+        // O Spring Security adiciona "ROLE_" automaticamente ao usar hasRole().
+        // Aqui usamos SimpleGrantedAuthority diretamente, então o prefixo
+        // deve estar presente UMA única vez: "ROLE_ADMIN", não "ROLE_ROLE_ADMIN".
+        String roleName = "ROLE_" + user.getRole().name().toUpperCase();
 
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
